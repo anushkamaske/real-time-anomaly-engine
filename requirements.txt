@@ -1,0 +1,12 @@
+confluent-kafka==1.7.0
+pandas==1.5.3
+scikit-learn==1.2.0
+joblib==1.2.0
+faust-streaming==1.10.4
+bentoml==1.0.2
+fastapi==0.95.0
+uvicorn==0.22.0
+celery==5.4.7
+redis==4.3.4
+slack-sdk==3.22.0
+prometheus-client==0.16.0
