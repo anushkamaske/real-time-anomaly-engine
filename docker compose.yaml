@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on: [zookeeper]
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  redis:
+    image: redis:7-alpine
+
+  producer:
+    build: .
+    command: python producer.py
+    depends_on: [kafka]
+
+  processor:
+    build: .
+    command: faust -A processor worker -l info
+    depends_on: [kafka, redis]
+
+  train:
+    build: .
+    command: python train_model.py
+
+  bento_service:
+    build: .
+    command: bentoml serve AnomalyService:latest --reload
+
+  api:
+    build: .
+    ports: ["8000:8000"]
+    command: uvicorn api:app --host 0.0.0.0 --port 8000
+    depends_on: [bento_service]
+
+  celery:
+    build: .
+    command: celery -A tasks worker --loglevel=info
+    depends_on: [redis]
+
+  exporter:
+    build: .
+    command: python exporter.py
+    ports: ["8001:8001"]
